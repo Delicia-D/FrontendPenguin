@@ -168,8 +168,7 @@
           const user = userCredential.user;
           return firebase.database().ref("users/" + user.uid).once("value").then(snapshot => {
             const userData = snapshot.val();
-            console.log("📌 User DB Record:", userData);
-            console.log("📌 Email Verified:", user.emailVerified);
+            
 
             if (!userData) {
               showFeedback("User record not found.");
@@ -192,10 +191,11 @@
               return;
             }
 
-            if (!isApproved || !isVerified) {
-              showFeedback("Your account is not approved or your email is not verified.");
-              return auth.signOut();
-            }
+              if (!isApproved) {
+    showFeedback("Your account is not approved yet.");
+    return auth.signOut();
+  }
+
 
             showFeedback("Login successful! Redirecting...", "success");
             setTimeout(() => window.location.href = "dashboard.html", 1000);
