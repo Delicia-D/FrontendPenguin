@@ -600,14 +600,7 @@ input[type="text"] {
   object-fit: contain;
 }
 
-/*.latest-penguin-card img {
-  width: 100%;
-  max-height: 200px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-top: 10px;
-}
-*/
+
 .penguin-info-row img {
   width: 120px;
   max-height: 160px;
@@ -659,4 +652,50 @@ input[type="text"] {
   color: #ffffff;
   font-weight: bold;
   font-size: 16px;
+}
+/* Offline notification banner */
+.offline-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ff3d00;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  display: none;
+  animation: slideUp 0.3s ease-out;
+  font-size: 14px;
+}
+
+.offline-banner.show {
+  display: block;
+}
+
+@keyframes slideUp {
+  from { bottom: -50px; opacity: 0; }
+  to { bottom: 20px; opacity: 1; }
+}
+
+/* For online status (optional) */
+.online-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #00c853;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  display: none;
+  animation: slideUp 0.3s ease-out;
+  font-size: 14px;
+}
+
+.online-banner.show {
+  display: block;
 }

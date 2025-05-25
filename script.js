@@ -769,3 +769,381 @@ function toggleNotes() {
     loadPenguinNotes(currentNotesPenguinId);
   }
 }
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(registration => {
+        console.log('ServiceWorker registration successful');
+        
+        // Check for updates every hour
+        setInterval(() => {
+          registration.update();
+        }, 60 * 60 * 1000);
+      })
+      .catch(err => {
+        console.log('ServiceWorker registration failed: ', err);
+      });
+  });
+}
+
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('Service Worker registered successfully:', registration.scope);
+        
+        // Check for updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New content is available
+              showUpdateAvailable();
+            }
+          });
+        });
+      })
+      .catch((error) => {
+        console.error('Service Worker registration failed:', error);
+      });
+
+    // Listen for service worker messages
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'CACHE_UPDATED') {
+        showFeedback('App updated! Refresh to see changes.', 'success');
+      }
+    });
+  });
+}
+
+// PWA Install Prompt Handling
+let deferredPrompt;
+let installButton;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  console.log('beforeinstallprompt event fired');
+  // Prevent the mini-infobar from appearing on mobile
+  e.preventDefault();
+  // Stash the event so it can be triggered later
+  deferredPrompt = e;
+  
+  // Show your custom install button/prompt
+  showInstallPromotion();
+});
+
+function showInstallPromotion() {
+  // Remove existing install button if any
+  if (installButton) {
+    installButton.remove();
+  }
+
+  // Create install button
+  installButton = document.createElement('button');
+  installButton.textContent = '📱 Install App';
+  installButton.className = 'install-btn';
+  installButton.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    animation: pulse 2s infinite;
+  `;
+
+  // Add CSS animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .install-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+  `;
+  document.head.appendChild(style);
+
+  installButton.addEventListener('click', installApp);
+  document.body.appendChild(installButton);
+
+  // Auto-hide after 10 seconds
+  setTimeout(() => {
+    if (installButton && installButton.parentNode) {
+      installButton.style.animation = 'none';
+      installButton.style.opacity = '0.7';
+    }
+  }, 10000);
+}
+
+function installApp() {
+  if (!deferredPrompt) {
+    console.log('No deferred prompt available');
+    return;
+  }
+
+  // Hide the button
+  installButton.style.display = 'none';
+  
+  // Show the install prompt
+  deferredPrompt.prompt();
+  
+  // Wait for the user to respond to the prompt
+  deferredPrompt.userChoice.then((choiceResult) => {
+    if (choiceResult.outcome === 'accepted') {
+      console.log('User accepted the install prompt');
+      showFeedback('App is being installed!', 'success');
+    } else {
+      console.log('User dismissed the install prompt');
+      showFeedback('You can install the app anytime from your browser menu.', 'info');
+    }
+    deferredPrompt = null;
+  });
+}
+
+// Handle app installation
+window.addEventListener('appinstalled', (event) => {
+  console.log('App was installed');
+  showFeedback('App installed successfully!', 'success');
+  if (installButton) {
+    installButton.remove();
+  }
+});
+
+// Offline/Online Status Detection
+function initializeOfflineDetection() {
+  let offlineMessage;
+
+  function createOfflineMessage() {
+    offlineMessage = document.createElement('div');
+    offlineMessage.id = 'offline-message';
+    offlineMessage.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+      color: white;
+      padding: 10px 20px;
+      text-align: center;
+      z-index: 10000;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+      font-weight: 600;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    `;
+    offlineMessage.innerHTML = `
+      <span>📱 You're offline - Showing cached content</span>
+    `;
+    document.body.appendChild(offlineMessage);
+  }
+
+  function updateOnlineStatus() {
+    const isOnline = navigator.onLine;
+    
+    if (!offlineMessage) {
+      createOfflineMessage();
+    }
+
+    if (isOnline) {
+      offlineMessage.style.transform = 'translateY(-100%)';
+      console.log('App is online');
+      // Optionally refresh data when coming back online
+      refreshDataWhenOnline();
+    } else {
+      offlineMessage.style.transform = 'translateY(0)';
+      console.log('App is offline');
+    }
+  }
+
+  function refreshDataWhenOnline() {
+    // Add any data refresh logic here
+    if (typeof loadPenguinData === 'function') {
+      loadPenguinData();
+    }
+  }
+
+  // Event listeners
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  
+  // Initial check
+  updateOnlineStatus();
+}
+
+// Update Available Notification
+function showUpdateAvailable() {
+  const updateBanner = document.createElement('div');
+  updateBanner.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #4CAF50;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    z-index: 10001;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  `;
+  updateBanner.innerHTML = `
+    <div> New version available!</div>
+    <small>Click to update</small>
+  `;
+  
+  updateBanner.addEventListener('click', () => {
+    window.location.reload();
+  });
+  
+  document.body.appendChild(updateBanner);
+  
+  // Auto-remove after 10 seconds
+  setTimeout(() => {
+    if (updateBanner.parentNode) {
+      updateBanner.remove();
+    }
+  }, 10000);
+}
+
+// Feedback System
+function showFeedback(message, type = 'info') {
+  const feedback = document.createElement('div');
+  const colors = {
+    success: '#4CAF50',
+    error: '#f44336',
+    warning: '#ff9800',
+    info: '#2196F3'
+  };
+  
+  feedback.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: ${colors[type]};
+    color: white;
+    padding: 12px 24px;
+    border-radius: 5px;
+    z-index: 10000;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    animation: slideUp 0.3s ease;
+  `;
+  
+  // Add animation CSS
+  if (!document.querySelector('#feedback-animations')) {
+    const style = document.createElement('style');
+    style.id = 'feedback-animations';
+    style.textContent = `
+      @keyframes slideUp {
+        from { transform: translateX(-50%) translateY(100%); opacity: 0; }
+        to { transform: translateX(-50%) translateY(0); opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  feedback.textContent = message;
+  document.body.appendChild(feedback);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    if (feedback.parentNode) {
+      feedback.style.opacity = '0';
+      feedback.style.transform = 'translateX(-50%) translateY(100%)';
+      setTimeout(() => feedback.remove(), 300);
+    }
+  }, 5000);
+}
+
+// Initialize everything when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  initializeOfflineDetection();
+  
+  // Force update check every 30 minutes
+  setInterval(() => {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({type: 'CACHE_UPDATE'});
+    }
+  }, 30 * 60 * 1000);
+});
+
+// Network request wrapper with offline handling
+function fetchWithOfflineSupport(url, options = {}) {
+  return fetch(url, options)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response;
+    })
+    .catch(error => {
+      if (!navigator.onLine) {
+        console.log('Request failed - offline mode');
+        // Return cached data or show offline message
+        throw new Error('Offline - using cached data');
+      }
+      throw error;
+    });
+}
+
+// Export for use in other scripts
+window.showFeedback = showFeedback;
+window.fetchWithOfflineSupport = fetchWithOfflineSupport;
+// Offline/Online detection
+function setupConnectionMonitor() {
+  const offlineBanner = document.getElementById('offlineBanner');
+  const onlineBanner = document.getElementById('onlineBanner');
+  
+  // Initial check
+  updateStatus();
+  
+  // Event listeners
+  window.addEventListener('online', updateStatus);
+  window.addEventListener('offline', updateStatus);
+  
+  function updateStatus() {
+    if (!navigator.onLine) {
+      showOfflineBanner();
+    } else {
+      showOnlineBanner();
+    }
+  }
+  
+  function showOfflineBanner() {
+    offlineBanner.classList.add('show');
+    setTimeout(() => {
+      offlineBanner.classList.remove('show');
+    }, 5000); // Hide after 5 seconds
+  }
+  
+  function showOnlineBanner() {
+    // Only show if we were previously offline
+    if (offlineBanner.classList.contains('show')) {
+      onlineBanner.classList.add('show');
+      setTimeout(() => {
+        onlineBanner.classList.remove('show');
+      }, 3000); // Hide after 3 seconds
+    }
+  }
+  
+  // Optional: Periodic connection check
+  setInterval(() => {
+    updateStatus();
+  }, 30000); // Check every 30 seconds
+}
+
+// Call this when your app starts
+document.addEventListener('DOMContentLoaded', setupConnectionMonitor);

@@ -9,10 +9,17 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="light-mode.css" id="light-mode-stylesheet" disabled>
 <link rel="stylesheet" href="analytics/light-mode-analytics.css" id="light-mode-analytics-stylesheet" disabled>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a73e8">
+<link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+<meta name="apple-mobile-web-app-status-bar" content="#1a73e8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PenguinMonitor">
 
 
   
 <body>
+  
     <div class="sidebar">
         <h2><i class="fas fa-tachometer-alt"></i> Dashboard</h2>
     
@@ -185,6 +192,12 @@
   <span class="close-btn" onclick="closeImageLightbox()" style="position: absolute; top: 20px; right: 30px; font-size: 28px; color: white; cursor: pointer;">&times;</span>
   <img id="lightboxImg" src="" alt="Full Image" style="max-width: 90%; max-height: 90vh; border-radius: 8px;" />
 </div>
+<div id="offlineBanner" class="offline-banner">
+  <i class="fas fa-wifi-slash"></i> You're offline - showing cached data
+</div>
 
+<div id="onlineBanner" class="online-banner">
+  <i class="fas fa-wifi"></i> Connection restored
+</div>
 </body>
 </html>
