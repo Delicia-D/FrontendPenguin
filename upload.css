@@ -125,9 +125,15 @@ button[type="submit"]:hover {
   100% { transform: rotate(360deg); }
 }
 
+.hidden {
+  display: none;
+}
 
+.ml-2 {
+  margin-left: 0.5rem;
+}
 #uploadMessage.success {
-    color: #4CAF50;
+    color: #564caf;
 }
 
 #uploadMessage.error {

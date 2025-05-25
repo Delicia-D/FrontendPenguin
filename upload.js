@@ -3,56 +3,18 @@ document.getElementById("uploadForm").addEventListener("submit", function (e) {
   
     const form = e.target;
     const formData = new FormData(form);
-  
-    fetch("https://penguin-monitoring-backend.onrender.com/upload", {
-      method: "POST",
-      body: formData
-    })
-    .then(res => {
-      if (!res.ok) throw new Error("Upload failed");
-      return res.json();
-    })
-    .then(data => {
-      document.getElementById("uploadMessage").innerText = "Upload successful!";
-      form.reset();
-    })
-    .catch(err => {
-      console.error(err);
-      document.getElementById("uploadMessage").innerText = "Upload failed.";
-    });
-  });
-  
-  function applySavedTheme() {
-    const savedTheme = localStorage.getItem('themePreference');
-    const lightMode = document.getElementById('upload-light-stylesheet');
-    const darkMode = document.getElementById('upload-dark-stylesheet');
-
-    if (savedTheme === 'light') {
-      document.body.classList.add('light-mode');
-      lightMode.disabled = false;
-      darkMode.disabled = true;
-    } else {
-      document.body.classList.remove('light-mode');
-      lightMode.disabled = true;
-      darkMode.disabled = false;
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', applySavedTheme);
-document.getElementById("uploadForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-  
-    const form = e.target;
-    const formData = new FormData(form);
-    const submitButton = form.querySelector('button[type="submit"]');
+    const uploadButton = document.getElementById("uploadButton");
+    const uploadText = document.getElementById("uploadText");
+    const uploadSpinner = document.getElementById("uploadSpinner");
     const uploadMessage = document.getElementById("uploadMessage");
     
     // Show loading state
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<div class="loading-spinner"></div> Uploading...';
+    uploadText.classList.add("hidden");
+    uploadSpinner.classList.remove("hidden");
+    uploadButton.disabled = true;
     uploadMessage.innerText = "";
-    uploadMessage.className = ""; // Reset any previous classes
-
+    uploadMessage.className = "";
+    
     fetch("https://penguin-monitoring-backend.onrender.com/upload", {
       method: "POST",
       body: formData
@@ -73,8 +35,9 @@ document.getElementById("uploadForm").addEventListener("submit", function (e) {
     })
     .finally(() => {
       // Reset button state
-      submitButton.disabled = false;
-      submitButton.textContent = "Submit Data";
+      uploadText.classList.remove("hidden");
+      uploadSpinner.classList.add("hidden");
+      uploadButton.disabled = false;
     });
 });
 
@@ -95,5 +58,3 @@ function applySavedTheme() {
 }
 
 document.addEventListener('DOMContentLoaded', applySavedTheme);
-
-  
